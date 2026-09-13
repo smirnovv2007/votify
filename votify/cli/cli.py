@@ -226,6 +226,7 @@ async def main(config: CliConfig):
             except StopAsyncIteration:
                 break
             except VotifyUrlParseException as e:
+                error_count += 1
                 logger.error(url_progress + f" {str(e)}")
                 break
             except Exception as e:
