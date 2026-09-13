@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import sys
 from functools import wraps
 from pathlib import Path
 
@@ -198,6 +199,11 @@ async def main(config: CliConfig):
                         if line.strip()
                     ]
                 )
+            else:
+                logger.warning(f'"{url}" is not an existing file, skipping')
+        if not urls_from_file:
+            logger.error("No URLs were loaded from the provided file(s)")
+            sys.exit(1)
         urls = urls_from_file
     else:
         urls = config.urls
@@ -210,6 +216,7 @@ async def main(config: CliConfig):
         download_index = 1
         while True:
             item = None
+            downloaded = False
             download_queue_progress = click.style(
                 f"[Track {download_index}]",
                 dim=True,
@@ -239,6 +246,11 @@ async def main(config: CliConfig):
                 logger.info(download_queue_progress + f' Downloading "{media_title}"')
 
                 await downloader.download(item)
+                downloaded = True
+            except VotifyMediaFlatFilterException as e:
+                logger.info(
+                    download_queue_progress + f' Skipping "{media_title}": {str(e)}'
+                )
             except VotifyDownloaderException as e:
                 logger.warning(
                     download_queue_progress + f' Skipping "{media_title}": {str(e)}'
@@ -260,6 +272,10 @@ async def main(config: CliConfig):
                 ):
                     media_id = item.media.media_metadata["uri"].split(":")[-1]
                     database.add(media_id, item.final_path)
-                await asyncio.sleep(config.wait_interval)
+                if downloaded:
+                    await asyncio.sleep(config.wait_interval)
 
     logger.info(f"Finished with {error_count} error(s)")
+
+    if error_count:
+        sys.exit(1)

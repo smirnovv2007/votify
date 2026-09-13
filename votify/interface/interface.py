@@ -261,11 +261,12 @@ class SpotifyInterface:
                     else:
                         base_media.error = VotifyMediaNotFoundException(track_id)
 
-                    media.playlist_metadata = playlist_data
-                    media.playlist_tags = self.base.get_playlist_tags(
-                        playlist_data,
-                        index,
-                    )
+                    if media is not None:
+                        media.playlist_metadata = playlist_data
+                        media.playlist_tags = self.base.get_playlist_tags(
+                            playlist_data,
+                            index,
+                        )
                 except Exception as e:
                     base_media.error = e
 
