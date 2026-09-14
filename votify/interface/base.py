@@ -9,7 +9,11 @@ from unplayplay.key_emu import KeyEmu
 from ..api import SpotifyApi
 from .constants import URL_INFO_RE
 from .enums import CoverSize, MediaRating
-from .exceptions import VotifyNoCdmException, VotifyUrlParseException
+from .exceptions import (
+    VotifyNoCdmException,
+    VotifyNoContentKeyException,
+    VotifyUrlParseException,
+)
 from .types import DecryptionKey, PlaylistTags, SpotifyUrlInfo
 
 logger = logging.getLogger(__name__)
@@ -67,7 +71,14 @@ class SpotifyBaseInterface:
 
     def _initialize_cdm(self) -> None:
         if self.wvd_path:
-            self.cdm = Cdm.from_device(Device.load(self.wvd_path))
+            device = Device.load(self.wvd_path)
+            if device.security_level != 1:
+                logger.warning(
+                    f"CDM security level {device.security_level}: Spotify rejects"
+                    " FLAC license requests for non-L1 CDMs; use AAC or an"
+                    " L1-certified CDM"
+                )
+            self.cdm = Cdm.from_device(device)
             self.cdm.MAX_NUM_OF_SESSIONS = float("inf")
         else:
             self.cdm = None
@@ -101,11 +112,14 @@ class SpotifyBaseInterface:
             challenge = self.cdm.get_license_challenge(cdm_session, pssh)
             license = await self.api.get_widevine_license(challenge, media_type)
             self.cdm.parse_license(cdm_session, license)
-            keys = next(
-                i for i in self.cdm.get_keys(cdm_session) if i.type == "CONTENT"
+            content_key = next(
+                (i for i in self.cdm.get_keys(cdm_session) if i.type == "CONTENT"),
+                None,
             )
-            decryption_key = keys.key.hex()
-            key_id = keys.kid.hex
+            if content_key is None:
+                raise VotifyNoContentKeyException()
+            decryption_key = content_key.key.hex()
+            key_id = content_key.kid.hex
         finally:
             self.cdm.close(cdm_session)
 

@@ -17,6 +17,7 @@ from ..api.proto.playplay_pb2 import ContentType, Interactivity, PlayPlayLicense
 from .base import SpotifyBaseInterface
 from .enums import AudioQuality
 from .exceptions import (
+    VotifyCdmSecurityLevelException,
     VotifyMediaFormatNotAvailableException,
     VotifyMediaFormatNotAvailableForSessionTypeException,
     VotifyNoKeyEmuException,
@@ -125,10 +126,15 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
         audio_quality: AudioQuality,
         skip_pssh: bool,
     ) -> StreamInfoAv | None:
+        flac = audio_quality in {AudioQuality.FLAC_MP4, AudioQuality.FLAC_MP4_24}
+
+        if flac and self.cdm and self.cdm.security_level != 1:
+            raise VotifyCdmSecurityLevelException(self.cdm.security_level)
+
         playback_info = await self._get_playback_info(
             media_id=media_id,
             media_type=media_type,
-            flac=audio_quality in {AudioQuality.FLAC_MP4, AudioQuality.FLAC_MP4_24},
+            flac=flac,
         )
 
         if (
@@ -141,7 +147,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
         file_id = self._parse_file_id(
             playback_info=playback_info,
             format_id=audio_quality.format_id,
-            flac=audio_quality in {AudioQuality.FLAC_MP4, AudioQuality.FLAC_MP4_24},
+            flac=flac,
         )
         if not file_id:
             return None
