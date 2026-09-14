@@ -30,7 +30,11 @@ votify = "votify.cli.cli:main"
 
 [project.optional-dependencies]
 librespot = [
-    "librespot>=0.0.1",
+    # PyPI librespot 0.0.1 uses Spotify's retired keymaster token endpoint
+    # (HTTP 403 since 2025-08) and 0.0.10 pins protobuf==3.20.1, which
+    # conflicts with pywidevine's protobuf>=6.33,<7. This branch is 0.0.10
+    # (Login5 tokens) with protobuf stubs regenerated for protobuf>=4.25.1,<7.
+    "librespot @ git+https://github.com/JavaGT/librespot-python@protobuf-6-compat",
 ]
 dev = [
     "asynctest>=0.13.0",

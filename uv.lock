@@ -338,8 +338,8 @@ wheels = [
 
 [[package]]
 name = "librespot"
-version = "0.0.1"
-source = { registry = "https://pypi.org/simple" }
+version = "0.0.10"
+source = { git = "https://github.com/JavaGT/librespot-python?rev=protobuf-6-compat#cbe969b01abc33a1a895b0092de4ca05da9863e9" }
 dependencies = [
     { name = "defusedxml" },
     { name = "protobuf" },
@@ -348,10 +348,6 @@ dependencies = [
     { name = "requests" },
     { name = "websocket-client" },
     { name = "zeroconf" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/f7/9f/8dbf93c9214e3a5287c4e688663de022a41bcab5c45ad6fe0273ca2d4414/librespot-0.0.1.tar.gz", hash = "sha256:0a957557b16855557d00bcefc033aeb42e04f85c8accc44394164e80d8be71b8", size = 100622, upload-time = "2022-02-09T11:55:01.408Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/4a/cc/38f273c9c8b0a42866c6525779cfbb44a4bcb5737479c88aa539163d3adb/librespot-0.0.1-py3-none-any.whl", hash = "sha256:a0ab933d904a0df58870dfc25b3ae2001b232993f1f0e711847bebb496a3b0b2", size = 130526, upload-time = "2022-02-09T11:54:58.938Z" },
 ]
 
 [[package]]
@@ -1070,7 +1066,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "httpx-retries", specifier = ">=0.4.6" },
     { name = "inquirerpy", specifier = ">=0.3.4" },
-    { name = "librespot", marker = "extra == 'librespot'", specifier = ">=0.0.1" },
+    { name = "librespot", marker = "extra == 'librespot'", git = "https://github.com/JavaGT/librespot-python?rev=protobuf-6-compat" },
     { name = "mutagen", specifier = ">=1.47.0" },
     { name = "pillow", specifier = ">=12.1.0" },
     { name = "pybase62", specifier = ">=1.0.0" },
