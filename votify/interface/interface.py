@@ -235,9 +235,14 @@ class SpotifyInterface:
                     media_id,
                     len(playlist_items),
                 )
-                playlist_items.extend(
-                    playlist_response["data"]["playlistV2"]["content"]["items"]
-                )
+                next_items = playlist_response["data"]["playlistV2"]["content"]["items"]
+                if not next_items:
+                    logger.warning(
+                        f"Playlist pagination ended early at {len(playlist_items)} "
+                        f"of {playlist_data['content']['totalCount']} items"
+                    )
+                    break
+                playlist_items.extend(next_items)
 
             for index, item in enumerate(playlist_items, start=1):
                 track_data = item["itemV2"]["data"]
@@ -448,11 +453,12 @@ class SpotifyInterface:
         select_all: bool = False,
     ) -> AsyncGenerator[SpotifyMedia | BaseException, None]:
         if key == "compilations":
-            albums_response = await self.base.api.get_artist_compilations(media_id)
+            get_artist_discography = self.base.api.get_artist_compilations
         elif key == "singles":
-            albums_response = await self.base.api.get_artist_singles(media_id)
+            get_artist_discography = self.base.api.get_artist_singles
         else:
-            albums_response = await self.base.api.get_artist_albums(media_id)
+            get_artist_discography = self.base.api.get_artist_albums
+        albums_response = await get_artist_discography(media_id)
         albums_data = albums_response["data"]["artistUnion"]
 
         if albums_data["__typename"] != "Artist":
@@ -464,13 +470,20 @@ class SpotifyInterface:
 
         album_items = albums_data["discography"][key]["items"]
         while len(album_items) < albums_data["discography"][key]["totalCount"]:
-            albums_response = await self.base.api.get_artist_albums(
+            albums_response = await get_artist_discography(
                 media_id,
                 len(album_items),
             )
-            album_items.extend(
-                albums_response["data"]["artistUnion"]["discography"][key]["items"]
-            )
+            next_items = albums_response["data"]["artistUnion"]["discography"][key][
+                "items"
+            ]
+            if not next_items:
+                logger.warning(
+                    f"Artist {key} pagination ended early at {len(album_items)} "
+                    f"of {albums_data['discography'][key]['totalCount']} items"
+                )
+                break
+            album_items.extend(next_items)
 
         album_items_filtered = [
             release_item
@@ -531,6 +544,13 @@ class SpotifyInterface:
 
             total = liked_tracks_data["totalCount"]
             items = liked_tracks_data["items"]
+            if not items:
+                if total is not None and offset < total:
+                    logger.warning(
+                        f"Liked tracks pagination ended early at {offset} "
+                        f"of {total} items"
+                    )
+                break
 
             for item in items:
                 track_data = item["track"]["data"]
