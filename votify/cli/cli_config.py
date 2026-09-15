@@ -116,7 +116,10 @@ class CliConfig:
         str,
         option(
             "--database-path",
-            help="Path to the SQLite database file for registering downloaded media",
+            help=(
+                "Path to the SQLite database file for registering "
+                "successfully downloaded media"
+            ),
             default=None,
             type=click.Path(
                 file_okay=True,
@@ -130,7 +133,10 @@ class CliConfig:
         bool,
         option(
             "--store-failed-downloads",
-            help="Store failed downloads in the database, skipping them on subsequent runs",
+            help=(
+                "Store failed downloads in the database, skipping them on "
+                "subsequent runs (no-op without --database-path)"
+            ),
             is_flag=True,
         ),
     ]

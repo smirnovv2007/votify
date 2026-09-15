@@ -256,13 +256,10 @@ async def main(config: CliConfig):
                     and item
                     and item.media
                     and item.media.media_metadata
-                    and item.staged_path
+                    and item.final_path
                     and (
-                        config.store_failed_downloads
-                        or (
-                            item.final_path
-                            and Path(item.final_path).exists()
-                        )
+                        item.completed
+                        or config.store_failed_downloads
                     )
                 ):
                     media_id = item.media.media_metadata["uri"].split(":")[-1]
