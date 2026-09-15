@@ -72,9 +72,13 @@ class SpotifyDownloader:
             await self._final_processing(item)
             item.completed = True
         except VotifySyncedLyricsOnly:
-            # The synced lyrics file was already fully written by
-            # _initial_processing, so the item's deliverable is complete
-            item.completed = True
+            # The synced lyrics file is the only deliverable in lyrics-only
+            # mode; it may not have been written (no synced lyrics available,
+            # --no-synced-lyrics-file, or items without a lyrics path)
+            item.completed = bool(
+                item.synced_lyrics_path
+                and Path(item.synced_lyrics_path).exists()
+            )
             raise
         finally:
             if not self.skip_cleanup:
