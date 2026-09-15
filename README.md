@@ -187,7 +187,8 @@ The file is created automatically on first run. Command-line arguments override 
 | `--log-file` / `log_file` | Log file path | `null` |
 | `--no-exceptions` / `no_exceptions` | Don't print exceptions | `false` |
 | `--no-config-file`, `-n` / - | Don't use a config file | `false` |
-| `--database-path` / `database_path` | Path to the SQLite database file for registering downloaded media | `null` |
+| `--database-path` / `database_path` | Path to the SQLite database file for registering successfully downloaded media | `null` |
+| `--store-failed-downloads` / `store_failed_downloads` | Store failed downloads in the database, skipping them on subsequent runs (no-op without `--database-path`) | `false` |
 | `--auto-media-option` / `auto_media_option` | Auto media option | `null` |
 | **Spotify** | | |
 | `--session-type` / `session_type` | Session type to use | `librespot` |
