@@ -405,10 +405,19 @@ class SpotifyInterface:
             offset = max(len(related_items), len(unmapped_items))
             videos_response = await self.base.api.get_artist_videos(media_id, offset)
             videos_data = videos_response["data"]["artistUnion"]
+            new_related = videos_data["relatedMusicVideos"]["items"]
+            new_unmapped = videos_data["unmappedMusicVideos"]["items"]
+            if not new_related and not new_unmapped:
+                logger.warning(
+                    f"Artist videos pagination ended early at {len(related_items)} "
+                    f"related and {len(unmapped_items)} unmapped of "
+                    f"{related_total} and {unmapped_total} items"
+                )
+                break
             if len(related_items) < related_total:
-                related_items.extend(videos_data["relatedMusicVideos"]["items"])
+                related_items.extend(new_related)
             if len(unmapped_items) < unmapped_total:
-                unmapped_items.extend(videos_data["unmappedMusicVideos"]["items"])
+                unmapped_items.extend(new_unmapped)
 
         video_items = related_items + unmapped_items
 
