@@ -126,6 +126,14 @@ class CliConfig:
             ),
         ),
     ]
+    store_failed_downloads: Annotated[
+        bool,
+        option(
+            "--store-failed-downloads",
+            help="Store failed downloads in the database, skipping them on subsequent runs",
+            is_flag=True,
+        ),
+    ]
     # API specific options
     session_type: Annotated[
         SessionType,

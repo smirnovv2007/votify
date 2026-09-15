@@ -257,6 +257,13 @@ async def main(config: CliConfig):
                     and item.media
                     and item.media.media_metadata
                     and item.staged_path
+                    and (
+                        config.store_failed_downloads
+                        or (
+                            item.final_path
+                            and Path(item.final_path).exists()
+                        )
+                    )
                 ):
                     media_id = item.media.media_metadata["uri"].split(":")[-1]
                     database.add(media_id, item.final_path)
