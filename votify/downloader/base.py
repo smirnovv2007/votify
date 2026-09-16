@@ -439,7 +439,11 @@ class SpotifyBaseDownloader:
                 timeout=ASYNC_COMMAND_TIMEOUT,
             )
         except asyncio.TimeoutError:
-            proc.kill()
+            # The process may exit between the timeout and the kill.
+            try:
+                proc.kill()
+            except ProcessLookupError:
+                pass
             await proc.wait()
             raise Exception(
                 f'"{args[0]}" timed out after {ASYNC_COMMAND_TIMEOUT} seconds'
