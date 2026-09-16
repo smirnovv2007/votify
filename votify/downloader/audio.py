@@ -14,7 +14,11 @@ from .types import DownloadItem
 
 logger = logging.getLogger(__name__)
 
+# Must stay larger than the 167-byte OGG header skip applied to the first
+# decrypted chunk in _decrypt_playplay, otherwise audio would be silently
+# dropped.
 DECRYPTION_CHUNK_SIZE = 1024 * 1024
+assert DECRYPTION_CHUNK_SIZE > 167
 
 
 class SpotifyAudioDownloader(SpotifyBaseDownloader):
