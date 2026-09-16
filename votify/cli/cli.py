@@ -210,6 +210,7 @@ async def main(config: CliConfig):
         download_index = 1
         while True:
             item = None
+            download_failed = False
             download_queue_progress = click.style(
                 f"[Track {download_index}]",
                 dim=True,
@@ -244,6 +245,7 @@ async def main(config: CliConfig):
                     download_queue_progress + f' Skipping "{media_title}": {str(e)}'
                 )
             except Exception as e:
+                download_failed = True
                 error_count += 1
                 logger.error(
                     download_queue_progress + f' Error downloading "{media_title}"',
@@ -257,6 +259,7 @@ async def main(config: CliConfig):
                     and item.media
                     and item.media.media_metadata
                     and item.staged_path
+                    and not download_failed
                 ):
                     media_id = item.media.media_metadata["uri"].split(":")[-1]
                     database.add(media_id, item.final_path)
