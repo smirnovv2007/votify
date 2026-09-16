@@ -351,8 +351,9 @@ class SpotifyBaseDownloader:
 
         try:
             file.save()
-        except OggVorbisHeaderError:
-            pass
+        except OggVorbisHeaderError as e:
+            logger.warning(f'Failed to apply tags to "{input_path}": {e}')
+            raise
 
     def _apply_mp4_tags(
         self,
