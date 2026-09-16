@@ -14,6 +14,8 @@ from .types import DownloadItem
 
 logger = logging.getLogger(__name__)
 
+DECRYPTION_CHUNK_SIZE = 1024 * 1024
+
 
 class SpotifyAudioDownloader(SpotifyBaseDownloader):
     def __init__(
@@ -159,13 +161,17 @@ class SpotifyAudioDownloader(SpotifyBaseDownloader):
 
         byte_skip = 167 if input_path.lower().endswith(".ogg") else 0
 
-        with open(input_path, "rb") as encrypted_file:
-            encrypted_data = encrypted_file.read()
-
-        decrypted_data = cipher.decrypt(encrypted_data)
-
-        with open(output_path, "wb") as decrypted_file:
-            decrypted_file.write(decrypted_data[byte_skip:])
+        with (
+            open(input_path, "rb") as encrypted_file,
+            open(output_path, "wb") as decrypted_file,
+        ):
+            is_first_chunk = True
+            while chunk := encrypted_file.read(DECRYPTION_CHUNK_SIZE):
+                decrypted_chunk = cipher.decrypt(chunk)
+                if is_first_chunk:
+                    decrypted_chunk = decrypted_chunk[byte_skip:]
+                    is_first_chunk = False
+                decrypted_file.write(decrypted_chunk)
 
     async def _decrypt_mp4decrypt(
         self,
