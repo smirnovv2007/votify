@@ -22,6 +22,8 @@ from .constants import ILLEGAL_CHAR_REPLACEMENT, ILLEGAL_CHARS_RE, TEMP_PATH_TEM
 
 logger = logging.getLogger(__name__)
 
+ASYNC_COMMAND_TIMEOUT = 1800
+
 
 class SpotifyBaseDownloader:
     def __init__(
@@ -420,6 +422,16 @@ class SpotifyBaseDownloader:
             *args,
             **additional_args,
         )
-        await proc.communicate()
+        try:
+            await asyncio.wait_for(
+                proc.communicate(),
+                timeout=ASYNC_COMMAND_TIMEOUT,
+            )
+        except asyncio.TimeoutError:
+            proc.kill()
+            await proc.wait()
+            raise Exception(
+                f'"{args[0]}" timed out after {ASYNC_COMMAND_TIMEOUT} seconds'
+            )
         if proc.returncode != 0:
             raise Exception(f'"{args[0]}" exited with code {proc.returncode}')
