@@ -13,3 +13,6 @@ class DownloadItem:
     playlist_file_path: str | None = None
     synced_lyrics_path: str | None = None
     cover_path: str | None = None
+    # Set once the item's deliverable is fully written; used by the CLI to
+    # decide whether the item may be registered in the database
+    completed: bool = False
