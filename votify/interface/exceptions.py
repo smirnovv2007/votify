@@ -20,6 +20,23 @@ class VotifyNoKeyEmuException(VotifyInterfaceException):
         )
 
 
+class VotifyCdmSecurityLevelException(VotifyInterfaceException):
+    def __init__(self, security_level: int):
+        super().__init__(
+            f"CDM security level {security_level} cannot fetch FLAC; use AAC"
+            " or an L1-certified CDM"
+        )
+
+        self.security_level = security_level
+
+
+class VotifyNoContentKeyException(VotifyInterfaceException):
+    def __init__(self):
+        super().__init__(
+            "Widevine license response contained no CONTENT decryption key"
+        )
+
+
 class VotifyUrlParseException(VotifyInterfaceException):
     def __init__(self, url: str):
         super().__init__(f"Failed to parse Spotify URL: {url}")
