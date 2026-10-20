@@ -9,6 +9,7 @@ from pathlib import Path
 
 import httpx
 from async_lru import alru_cache
+from httpx_retries import Retry, RetryTransport
 from mutagen.flac import FLAC, Picture
 from mutagen.mp4 import MP4, MP4Cover
 from mutagen.oggvorbis import OggVorbis, OggVorbisHeaderError
@@ -21,6 +22,14 @@ from ..utils import CustomStringFormatter
 from .constants import ILLEGAL_CHAR_REPLACEMENT, ILLEGAL_CHARS_RE, TEMP_PATH_TEMPLATE
 
 logger = logging.getLogger(__name__)
+
+ASYNC_COMMAND_TIMEOUT = 1800
+COVER_REQUEST_TIMEOUT = 30
+COVER_RETRY = Retry(
+    total=3,
+    backoff_factor=1,
+    status_forcelist=[429, 500, 502, 503, 504],
+)
 
 
 class SpotifyBaseDownloader:
@@ -272,7 +281,11 @@ class SpotifyBaseDownloader:
 
     @alru_cache()
     async def get_cover_bytes(self, cover_url: str) -> bytes | None:
-        async with httpx.AsyncClient() as client:
+        transport = RetryTransport(retry=COVER_RETRY)
+        async with httpx.AsyncClient(
+            transport=transport,
+            timeout=COVER_REQUEST_TIMEOUT,
+        ) as client:
             response = await client.get(cover_url)
 
             if response.status_code == 200:
@@ -351,8 +364,9 @@ class SpotifyBaseDownloader:
 
         try:
             file.save()
-        except OggVorbisHeaderError:
-            pass
+        except OggVorbisHeaderError as e:
+            logger.warning(f'Failed to apply tags to "{input_path}": {e}')
+            raise
 
     def _apply_mp4_tags(
         self,
@@ -419,6 +433,20 @@ class SpotifyBaseDownloader:
             *args,
             **additional_args,
         )
-        await proc.communicate()
+        try:
+            await asyncio.wait_for(
+                proc.communicate(),
+                timeout=ASYNC_COMMAND_TIMEOUT,
+            )
+        except asyncio.TimeoutError:
+            # The process may exit between the timeout and the kill.
+            try:
+                proc.kill()
+            except ProcessLookupError:
+                pass
+            await proc.wait()
+            raise Exception(
+                f'"{args[0]}" timed out after {ASYNC_COMMAND_TIMEOUT} seconds'
+            )
         if proc.returncode != 0:
             raise Exception(f'"{args[0]}" exited with code {proc.returncode}')
